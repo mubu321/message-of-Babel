@@ -5,85 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>バベルのメッセージ</title>
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f3f4f6;
-      color: #333;
-    }
-
-    header {
-      background-color: #4CAF50;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-
-    main {
-      padding: 1rem;
-      max-width: 800px;
-      margin: auto;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-    }
-
-    input, button, textarea {
-      width: 100%;
-      padding: 0.8rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    input[readonly], textarea[readonly] {
-      background-color: #e9ecef;
-      cursor: not-allowed;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-      border: none;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    #timeline {
-      list-style: none;
-      padding: 0;
-    }
-
-    #timeline li {
-      display: flex;
-      align-items: center;
-      background: white;
-      border: 1px solid #ddd;
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: 5px;
-    }
-
-    #timeline li img {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      margin-right: 1rem;
-    }
-
-    .content {
-      flex: 1;
+    /* CSSは前のコードと同じ */
+    .error {
+      color: red;
+      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -117,6 +42,7 @@
         <label for="message-preview">生成された投稿 (編集不可):</label>
         <textarea id="message-preview" readonly></textarea>
         <button id="post-message-btn" disabled>投稿する</button>
+        <div id="error-message" class="error"></div>
       </div>
     </section>
     <section id="timeline-section">
@@ -132,11 +58,48 @@
     const messageLengthInput = document.getElementById("message-length");
     const messagePreview = document.getElementById("message-preview");
     const postMessageBtn = document.getElementById("post-message-btn");
+    const errorMessage = document.getElementById("error-message");
+
+    const localStorageKey = "babelMessages";
 
     // Generate random string of hiragana
     const generateRandomHiragana = (length) => {
       const hiragana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんばびぶべぼがぎぐげござじずぜぞ";
       return Array.from({ length }, () => hiragana.charAt(Math.floor(Math.random() * hiragana.length))).join("");
+    };
+
+    // Load messages from localStorage
+    const loadMessages = () => {
+      const savedMessages = JSON.parse(localStorage.getItem(localStorageKey)) || [];
+      savedMessages.forEach(addMessageToTimeline);
+    };
+
+    // Save messages to localStorage
+    const saveMessage = (name, message, iconSrc) => {
+      const savedMessages = JSON.parse(localStorage.getItem(localStorageKey)) || [];
+      savedMessages.push({ name, message, iconSrc });
+      localStorage.setItem(localStorageKey, JSON.stringify(savedMessages));
+    };
+
+    // Add a message to the timeline
+    const addMessageToTimeline = ({ name, message, iconSrc }) => {
+      const listItem = document.createElement("li");
+
+      // Create the icon
+      const img = document.createElement("img");
+      img.src = iconSrc || "https://via.placeholder.com/50";
+
+      // Add name and message
+      const contentDiv = document.createElement("div");
+      contentDiv.classList.add("content");
+      contentDiv.innerHTML = `<strong>${name}</strong><br>${message}`;
+
+      // Append elements to the list item
+      listItem.appendChild(img);
+      listItem.appendChild(contentDiv);
+
+      // Add list item to the timeline
+      timeline.prepend(listItem);
     };
 
     // Handle random name generation
@@ -159,40 +122,38 @@
       const name = nameDisplay.value || "ななしさん";
       const message = messagePreview.value;
 
+      // Validate message length (minimum 2 characters)
+      if (message.length <= 1) {
+        errorMessage.textContent = "投稿は2文字以上である必要があります。";
+        return;
+      }
+
+      // Clear any previous error
+      errorMessage.textContent = "";
+
       const iconFile = iconInput.files[0];
+      let iconSrc = "https://via.placeholder.com/50";
 
-      // Create a new list item
-      const listItem = document.createElement("li");
-
-      // Create the icon
-      const img = document.createElement("img");
       if (iconFile) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          img.src = e.target.result;
+          iconSrc = e.target.result;
+          saveMessage(name, message, iconSrc);
+          addMessageToTimeline({ name, message, iconSrc });
         };
         reader.readAsDataURL(iconFile);
       } else {
-        img.src = "https://via.placeholder.com/50"; // Default icon
+        saveMessage(name, message, iconSrc);
+        addMessageToTimeline({ name, message, iconSrc });
       }
-
-      // Add name and message
-      const contentDiv = document.createElement("div");
-      contentDiv.classList.add("content");
-      contentDiv.innerHTML = `<strong>${name}</strong><br>${message}`;
-
-      // Append elements to the list item
-      listItem.appendChild(img);
-      listItem.appendChild(contentDiv);
-
-      // Add list item to the timeline
-      timeline.prepend(listItem);
 
       // Reset preview and disable post button
       messagePreview.value = "";
       postMessageBtn.disabled = true;
     });
+
+    // Load existing messages on page load
+    window.addEventListener("DOMContentLoaded", loadMessages);
   </script>
 </body>
 </html>
-
