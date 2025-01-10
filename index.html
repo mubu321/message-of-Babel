@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>バベルのメッセージ</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      color: #333;
+    }
+
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    main {
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    input, button, textarea {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    input[readonly], textarea[readonly] {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #timeline {
+      list-style: none;
+      padding: 0;
+    }
+
+    #timeline li {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #ddd;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 5px;
+    }
+
+    #timeline li img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 1rem;
+    }
+
+    .content {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    バベルのメッセージ
+  </header>
+  <main>
+    <section id="settings-section">
+      <div class="form-group">
+        <label for="name-display">生成された名前:</label>
+        <input type="text" id="name-display" readonly placeholder="ランダムな名前を生成してください">
+        <div class="form-group">
+          <label for="name-length">名前の長さ:</label>
+          <input type="number" id="name-length" min="1" max="20" value="5">
+        </div>
+        <button id="random-name-btn">名前を生成</button>
+      </div>
+      <div class="form-group">
+        <label for="icon-input">アイコンをアップロード:</label>
+        <input type="file" id="icon-input" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label for="message-length">投稿の長さ:</label>
+        <input type="number" id="message-length" min="1" max="50" value="20">
+      </div>
+      <div class="form-group">
+        <button id="generate-message-btn">投稿を生成</button>
+      </div>
+      <div class="form-group">
+        <label for="message-preview">生成された投稿 (編集不可):</label>
+        <textarea id="message-preview" readonly></textarea>
+        <button id="post-message-btn" disabled>投稿する</button>
+      </div>
+    </section>
+    <section id="timeline-section">
+      <h2>タイムライン</h2>
+      <ul id="timeline"></ul>
+    </section>
+  </main>
+  <script>
+    const timeline = document.getElementById("timeline");
+    const nameDisplay = document.getElementById("name-display");
+    const iconInput = document.getElementById("icon-input");
+    const nameLengthInput = document.getElementById("name-length");
+    const messageLengthInput = document.getElementById("message-length");
+    const messagePreview = document.getElementById("message-preview");
+    const postMessageBtn = document.getElementById("post-message-btn");
+
+    // Generate random string of hiragana
+    const generateRandomHiragana = (length) => {
+      const hiragana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん";
+      return Array.from({ length }, () => hiragana.charAt(Math.floor(Math.random() * hiragana.length))).join("");
+    };
+
+    // Handle random name generation
+    document.getElementById("random-name-btn").addEventListener("click", () => {
+      const nameLength = parseInt(nameLengthInput.value, 10);
+      const randomName = generateRandomHiragana(nameLength);
+      nameDisplay.value = randomName;
+    });
+
+    // Handle random message generation
+    document.getElementById("generate-message-btn").addEventListener("click", () => {
+      const messageLength = parseInt(messageLengthInput.value, 10);
+      const randomMessage = generateRandomHiragana(messageLength);
+      messagePreview.value = randomMessage;
+      postMessageBtn.disabled = false;
+    });
+
+    // Handle message posting
+    postMessageBtn.addEventListener("click", () => {
+      const name = nameDisplay.value || "ななしさん";
+      const message = messagePreview.value;
+
+      const iconFile = iconInput.files[0];
+
+      // Create a new list item
+      const listItem = document.createElement("li");
+
+      // Create the icon
+      const img = document.createElement("img");
+      if (iconFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(iconFile);
+      } else {
+        img.src = "https://via.placeholder.com/50"; // Default icon
+      }
+
+      // Add name and message
+      const contentDiv = document.createElement("div");
+      contentDiv.classList.add("content");
+      contentDiv.innerHTML = `<strong>${name}</strong><br>${message}`;
+
+      // Append elements to the list item
+      listItem.appendChild(img);
+      listItem.appendChild(contentDiv);
+
+      // Add list item to the timeline
+      timeline.prepend(listItem);
+
+      // Reset preview and disable post button
+      messagePreview.value = "";
+      postMessageBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>
+
